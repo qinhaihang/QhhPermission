@@ -1,8 +1,11 @@
 package com.sensetime.qinhaihang_vendor.qhhpermissionutils;
 
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 
 import com.sensetime.qinhaihang_vendor.qhhpermissionutils.callback.ICallbackManager;
 
@@ -25,23 +28,29 @@ public class PermissionHelper {
         mActivity = activity;
     }
 
-    public static PermissionHelper init(FragmentActivity activity){
+    public static PermissionHelper init(FragmentActivity activity) {
         return new PermissionHelper(activity);
     }
 
-    public void requestPermissions(@NonNull String[] permissions, ICallbackManager.IPermissionCallback callback){
+    public void checkPermission(String...permissions){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            getFragment().checkPermission(permissions);
+        }
+    }
+
+    public void requestPermissions(@NonNull String[] permissions, ICallbackManager.IPermissionCallback callback) {
         getFragment().requestPermissions(permissions, callback);
     }
 
-    public PermissionFragment getFragment(){
+    public PermissionFragment getFragment() {
         FragmentManager manager = mActivity.getSupportFragmentManager();
         PermissionFragment fragment = (PermissionFragment) manager.findFragmentByTag(REQUEST_PERMISSION);
 
-        if(null == fragment) {
+        if (null == fragment) {
             fragment = PermissionFragment.getInstance();
             manager.beginTransaction()
-                    .add(fragment, REQUEST_PERMISSION).
-                    commitAllowingStateLoss();
+                .add(fragment, REQUEST_PERMISSION)
+                .commitAllowingStateLoss();
             manager.executePendingTransactions(); //立即执行 commit 的事务
         }
 

@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.util.SparseArray;
 
 import com.sensetime.qinhaihang_vendor.qhhpermissionutils.bean.Permission;
@@ -55,6 +56,22 @@ public class PermissionFragment extends Fragment {
         } while (mCallbacks.indexOfKey(requestCode) >= 0 && tryCount < MAX_TRY_COUNT);
 
         return requestCode;
+    }
+
+    /**
+     * 查询权限是否申请
+     * @param permissions
+     */
+    public void checkPermission(String...permissions){
+
+        for (String permission : permissions) {
+            int permissionStatus = (int) ContextCompat.checkSelfPermission(mActivity, permission);
+            if(permissionStatus == PackageManager.PERMISSION_GRANTED){
+
+            }else{
+
+            }
+        }
     }
 
     public void requestPermissions(@NonNull String[] permissions,ICallbackManager.IPermissionCallback callback){
