@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 
 import com.sensetime.qinhaihang_vendor.qhhpermissionutils.PermissionHelper;
@@ -12,7 +13,7 @@ import com.sensetime.qinhaihang_vendor.qhhpermissionutils.callback.ICallbackMana
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements ICallbackManager.IDenyPermissionCallback {
+public class MainActivity extends AppCompatActivity implements ICallbackManager.IDenyPermissionCallback, ICallbackManager.IRequestCallback {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements ICallbackManager.
         PermissionHelper.getInstance()
                 .init(this)
                 .setmDenyPermissionCallback(this)
+                .setmRequestCallback(this)
                 .checkPermission(Manifest.permission.CAMERA,
                         Manifest.permission.READ_PHONE_STATE);
     }
@@ -48,5 +50,10 @@ public class MainActivity extends AppCompatActivity implements ICallbackManager.
                 })
                 .create()
                 .show();
+    }
+
+    @Override
+    public void onAllPermissonGranted(boolean flag) {
+        Log.d("qhh","onAllPermissonGranted = "+ flag);
     }
 }

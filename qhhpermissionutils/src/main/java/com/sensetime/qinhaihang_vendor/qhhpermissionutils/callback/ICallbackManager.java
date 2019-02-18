@@ -26,4 +26,8 @@ public interface ICallbackManager {
         void onDenyPermissions(List<String> permissions);
     }
 
+    interface IRequestCallback{
+        void onAllPermissonGranted(boolean flag);
+    }
+
 }

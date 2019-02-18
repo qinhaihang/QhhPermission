@@ -3,12 +3,10 @@ package com.sensetime.qinhaihang_vendor.qhhpermissionutils;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.util.Log;
 
 import com.sensetime.qinhaihang_vendor.qhhpermissionutils.bean.Permission;
 import com.sensetime.qinhaihang_vendor.qhhpermissionutils.callback.ICallbackManager;
@@ -30,8 +28,8 @@ public class PermissionHelper {
     private static final String REQUEST_PERMISSION = "request_permission";
     private static FragmentActivity mActivity;
 
-    private boolean isShowDenyPermissions = false;
     private ICallbackManager.IDenyPermissionCallback mDenyPermissionCallback;
+    private ICallbackManager.IRequestCallback mRequestCallback;
 
     private static class Holder{
         private static PermissionHelper INSTANCE = new PermissionHelper();
@@ -64,20 +62,13 @@ public class PermissionHelper {
         return fragment;
     }
 
-    /**
-     * TODO：还未完善，打算做一个默认展示用户拒绝的权限的对话框
-     */
-    private void showDenyPermissionsDialog(){
-
-    }
-
-    public PermissionHelper isShowDenyPermissions(boolean isShowDenyPermissions){
-        this.isShowDenyPermissions = isShowDenyPermissions;
+    public PermissionHelper setmDenyPermissionCallback(ICallbackManager.IDenyPermissionCallback mDenyPermissionCallback) {
+        this.mDenyPermissionCallback = mDenyPermissionCallback;
         return Holder.INSTANCE;
     }
 
-    public PermissionHelper setmDenyPermissionCallback(ICallbackManager.IDenyPermissionCallback mDenyPermissionCallback) {
-        this.mDenyPermissionCallback = mDenyPermissionCallback;
+    public PermissionHelper setmRequestCallback(ICallbackManager.IRequestCallback mRequestCallback) {
+        this.mRequestCallback = mRequestCallback;
         return Holder.INSTANCE;
     }
 
@@ -93,7 +84,7 @@ public class PermissionHelper {
                     new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" +
                             context.getPackageName()));
             intent.addCategory(Intent.CATEGORY_DEFAULT);
-            context.startActivity(intent); //这里的requestCode和onActivityResult中requestCode要一致
+            context.startActivity(intent);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -105,25 +96,33 @@ public class PermissionHelper {
      * @param permissions
      */
     public void checkPermission(String... permissions) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getFragment().checkPermission(new ICallbackManager.IPermissionListCallback() {
-                @Override
-                public void onResultCallback(List<Permission> permissions) {
+
+        getFragment().checkPermission(new ICallbackManager.IPermissionListCallback() {
+            @Override
+            public void onResultCallback(List<Permission> permissions) {
+                boolean granted = true;
+                if(null != permissions){
                     for (Permission permission : permissions) {
-                        Log.d("qhh", "permission = " + permission.name);
+                        if (!permission.granted) {
+                            granted = permission.granted;
+                            break;
+                        }
                     }
                 }
-
-                @Override
-                public void onCheckResultCallback(List<String> permissions) {
-
-                    if(null != mDenyPermissionCallback){
-                        mDenyPermissionCallback.onDenyPermissions(permissions);
-                    }
-
+                if (null != mRequestCallback) {
+                    mRequestCallback.onAllPermissonGranted(granted);
                 }
-            }, permissions);
-        }
+            }
+
+            @Override
+            public void onCheckResultCallback(List<String> permissions) {
+
+                if (null != mDenyPermissionCallback) {
+                    mDenyPermissionCallback.onDenyPermissions(permissions);
+                }
+
+            }
+        }, permissions);
     }
 
 }

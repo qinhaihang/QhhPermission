@@ -1,6 +1,7 @@
 package com.sensetime.qinhaihang_vendor.qhhpermissionutils;
 
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -20,7 +21,7 @@ import java.util.Random;
  * @author qinhaihang_vendor
  * @version $Rev$
  * @time 2019/2/15 16:11
- * @des  中间层，用于接收 onRequestPermissionsResult
+ * @des 中间层，用于接收 onRequestPermissionsResult
  * @packgename com.sensetime.qinhaihang_vendor.qhhpermissionutils
  * @updateAuthor $Author$
  * @updateDate $Date$
@@ -37,7 +38,7 @@ public class PermissionFragment extends Fragment {
     public PermissionFragment() {
     }
 
-    public static PermissionFragment getInstance(){
+    public static PermissionFragment getInstance() {
         return new PermissionFragment();
     }
 
@@ -48,7 +49,7 @@ public class PermissionFragment extends Fragment {
         mActivity = getActivity();
     }
 
-    private int createRequestCode(){
+    private int createRequestCode() {
         int requestCode;
         int tryCount = 0;
         do {
@@ -61,40 +62,53 @@ public class PermissionFragment extends Fragment {
 
     /**
      * 查询权限是否申请
+     *
      * @param permissions
      */
-    public void checkPermission(ICallbackManager.IPermissionListCallback listCallback,String...permissions){
+    public void checkPermission(ICallbackManager.IPermissionListCallback listCallback, String... permissions) {
+
         ArrayList<String> requestPermissionList = new ArrayList<>();
         ArrayList<String> denyPermissionList = new ArrayList<>();
 
-        for (String permission : permissions) {
-            int permissionStatus = (int) ContextCompat.checkSelfPermission(mActivity, permission);
-            if(permissionStatus != PackageManager.PERMISSION_GRANTED){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int grs = 0;
+            for (String permission : permissions) {
+                int permissionStatus = (int) ContextCompat.checkSelfPermission(mActivity, permission);
+                grs += permissionStatus;
+                if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
 
-                if(ActivityCompat.shouldShowRequestPermissionRationale(mActivity, permission)){
-                    //之前用户禁止过该权限，提示用户权限用处，以及是否重新去开启
-                    denyPermissionList.add(permission);
-                }else{
-                    requestPermissionList.add(permission);
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(mActivity, permission)) {
+                        //之前用户禁止过该权限，提示用户权限用处，以及是否重新去开启
+                        denyPermissionList.add(permission);
+                    } else {
+                        requestPermissionList.add(permission);
+                    }
+
                 }
-
             }
-        }
 
-        if(!requestPermissionList.isEmpty()){
-            requestPermissions(requestPermissionList.toArray(new String[requestPermissionList.size()]),listCallback);
-        }
+            if (grs == 0) { //全部已经授权过，不必再申请
+                listCallback.onResultCallback(null);
+            }
 
-        if(!denyPermissionList.isEmpty()){
-            listCallback.onCheckResultCallback(denyPermissionList);
+            if (!requestPermissionList.isEmpty()) {
+                requestPermissions(requestPermissionList.toArray(new String[requestPermissionList.size()]), listCallback);
+            }
+
+            if (!denyPermissionList.isEmpty()) {
+                listCallback.onCheckResultCallback(denyPermissionList);
+            }
+
+        } else { //不需要申请权限
+            listCallback.onResultCallback(null);
         }
 
     }
 
-    public void requestPermissions(@NonNull String[] permissions,ICallbackManager.IPermissionListCallback listCallback){
+    public void requestPermissions(@NonNull String[] permissions, ICallbackManager.IPermissionListCallback listCallback) {
         int requestCode = createRequestCode();
-        mListCallbacks.put(requestCode,listCallback);
-        requestPermissions(permissions,requestCode);
+        mListCallbacks.put(requestCode, listCallback);
+        requestPermissions(permissions, requestCode);
     }
 
     @Override
@@ -103,10 +117,10 @@ public class PermissionFragment extends Fragment {
         handlePermissionCallback(requestCode, permissions, grantResults);
     }
 
-    private void handlePermissionCallback(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
+    private void handlePermissionCallback(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         ICallbackManager.IPermissionListCallback callback = mListCallbacks.get(requestCode);
 
-        if(null == callback){
+        if (null == callback) {
             return;
         }
 
