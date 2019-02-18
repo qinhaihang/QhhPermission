@@ -18,7 +18,12 @@ public interface ICallbackManager {
 
     interface IPermissionListCallback {
         void onResultCallback(List<Permission> permissions);  //返回已经请求权限之后的结果
+
         void onCheckResultCallback(List<String> permissions); //返回的是用户拒绝过的权限
+    }
+
+    interface IDenyPermissionCallback {
+        void onDenyPermissions(List<String> permissions);
     }
 
 }

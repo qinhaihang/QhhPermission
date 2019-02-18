@@ -30,12 +30,23 @@ public class PermissionHelper {
     private static final String REQUEST_PERMISSION = "request_permission";
     private static FragmentActivity mActivity;
 
-    public PermissionHelper(FragmentActivity activity) {
-        mActivity = activity;
+    private boolean isShowDenyPermissions = false;
+    private ICallbackManager.IDenyPermissionCallback mDenyPermissionCallback;
+
+    private static class Holder{
+        private static PermissionHelper INSTANCE = new PermissionHelper();
     }
 
-    public static PermissionHelper init(FragmentActivity activity) {
-        return new PermissionHelper(activity);
+    public PermissionHelper() {
+    }
+
+    public static PermissionHelper getInstance(){
+        return Holder.INSTANCE;
+    }
+
+    public PermissionHelper init(FragmentActivity activity) {
+        mActivity = activity;
+        return Holder.INSTANCE;
     }
 
     private PermissionFragment getFragment() {
@@ -54,11 +65,28 @@ public class PermissionHelper {
     }
 
     /**
+     * TODO：还未完善，打算做一个默认展示用户拒绝的权限的对话框
+     */
+    private void showDenyPermissionsDialog(){
+
+    }
+
+    public PermissionHelper isShowDenyPermissions(boolean isShowDenyPermissions){
+        this.isShowDenyPermissions = isShowDenyPermissions;
+        return Holder.INSTANCE;
+    }
+
+    public PermissionHelper setmDenyPermissionCallback(ICallbackManager.IDenyPermissionCallback mDenyPermissionCallback) {
+        this.mDenyPermissionCallback = mDenyPermissionCallback;
+        return Holder.INSTANCE;
+    }
+
+    /**
      * 打开设置页面打开权限
      *
      * @param context
      */
-    private void startSettingActivity(@NonNull Activity context) {
+    public void startSettingActivity(@NonNull Activity context) {
 
         try {
             Intent intent =
@@ -88,10 +116,11 @@ public class PermissionHelper {
 
                 @Override
                 public void onCheckResultCallback(List<String> permissions) {
-                    //返回的是用户拒绝过的权限
-                    for (String permission : permissions) {
-                        Log.d("qhh", "deny permission = " + permission);
+
+                    if(null != mDenyPermissionCallback){
+                        mDenyPermissionCallback.onDenyPermissions(permissions);
                     }
+
                 }
             }, permissions);
         }
