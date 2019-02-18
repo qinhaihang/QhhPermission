@@ -2,6 +2,8 @@ package com.sensetime.qinhaihang_vendor.qhhpermissionutils.callback;
 
 import com.sensetime.qinhaihang_vendor.qhhpermissionutils.bean.Permission;
 
+import java.util.List;
+
 /**
  * @author qinhaihang_vendor
  * @version $Rev$
@@ -14,8 +16,9 @@ import com.sensetime.qinhaihang_vendor.qhhpermissionutils.bean.Permission;
  */
 public interface ICallbackManager {
 
-    interface IPermissionCallback{
-        void onAcceptCallback(Permission permission);
+    interface IPermissionListCallback {
+        void onResultCallback(List<Permission> permissions);  //返回已经请求权限之后的结果
+        void onCheckResultCallback(List<String> permissions); //返回的是用户拒绝过的权限
     }
 
 }

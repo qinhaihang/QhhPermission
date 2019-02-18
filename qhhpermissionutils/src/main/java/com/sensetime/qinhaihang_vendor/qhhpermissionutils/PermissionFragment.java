@@ -13,6 +13,7 @@ import android.util.SparseArray;
 import com.sensetime.qinhaihang_vendor.qhhpermissionutils.bean.Permission;
 import com.sensetime.qinhaihang_vendor.qhhpermissionutils.callback.ICallbackManager;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -30,7 +31,7 @@ public class PermissionFragment extends Fragment {
     private static final int MAX_TRY_COUNT = 10; //requesCode 刷新次数
     private FragmentActivity mActivity;
 
-    private SparseArray<ICallbackManager.IPermissionCallback> mCallbacks = new SparseArray<>();
+    private SparseArray<ICallbackManager.IPermissionListCallback> mListCallbacks = new SparseArray<>();
     private Random mCodeGenerator = new Random();
 
     public PermissionFragment() {
@@ -53,7 +54,7 @@ public class PermissionFragment extends Fragment {
         do {
             requestCode = mCodeGenerator.nextInt(0x0000FFFF);
             tryCount++;
-        } while (mCallbacks.indexOfKey(requestCode) >= 0 && tryCount < MAX_TRY_COUNT);
+        } while (mListCallbacks.indexOfKey(requestCode) >= 0 && tryCount < MAX_TRY_COUNT);
 
         return requestCode;
     }
@@ -62,21 +63,37 @@ public class PermissionFragment extends Fragment {
      * 查询权限是否申请
      * @param permissions
      */
-    public void checkPermission(String...permissions){
+    public void checkPermission(ICallbackManager.IPermissionListCallback listCallback,String...permissions){
+        ArrayList<String> requestPermissionList = new ArrayList<>();
+        ArrayList<String> denyPermissionList = new ArrayList<>();
 
         for (String permission : permissions) {
             int permissionStatus = (int) ContextCompat.checkSelfPermission(mActivity, permission);
-            if(permissionStatus == PackageManager.PERMISSION_GRANTED){
+            if(permissionStatus != PackageManager.PERMISSION_GRANTED){
 
-            }else{
+                if(ActivityCompat.shouldShowRequestPermissionRationale(mActivity, permission)){
+                    //之前用户禁止过该权限，提示用户权限用处，以及是否重新去开启
+                    denyPermissionList.add(permission);
+                }else{
+                    requestPermissionList.add(permission);
+                }
 
             }
         }
+
+        if(!requestPermissionList.isEmpty()){
+            requestPermissions(requestPermissionList.toArray(new String[requestPermissionList.size()]),listCallback);
+        }
+
+        if(!denyPermissionList.isEmpty()){
+            listCallback.onCheckResultCallback(denyPermissionList);
+        }
+
     }
 
-    public void requestPermissions(@NonNull String[] permissions,ICallbackManager.IPermissionCallback callback){
+    public void requestPermissions(@NonNull String[] permissions,ICallbackManager.IPermissionListCallback listCallback){
         int requestCode = createRequestCode();
-        mCallbacks.put(requestCode,callback);
+        mListCallbacks.put(requestCode,listCallback);
         requestPermissions(permissions,requestCode);
     }
 
@@ -87,26 +104,30 @@ public class PermissionFragment extends Fragment {
     }
 
     private void handlePermissionCallback(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
-        ICallbackManager.IPermissionCallback callback = mCallbacks.get(requestCode);
+        ICallbackManager.IPermissionListCallback callback = mListCallbacks.get(requestCode);
 
         if(null == callback){
             return;
         }
 
-        mCallbacks.remove(requestCode);
+        mListCallbacks.remove(requestCode);
 
         int length = grantResults.length;
+        ArrayList<Permission> needSetPermissions = new ArrayList<>();
+
         for (int i = 0; i < length; i++) {
 
             String permission = permissions[i];
             int grantResult = grantResults[i];
 
-            callback.onAcceptCallback(new Permission(
+            needSetPermissions.add(new Permission(
                     permission,
                     grantResult == PackageManager.PERMISSION_GRANTED,
                     ActivityCompat.shouldShowRequestPermissionRationale(mActivity, permission)
             ));
 
         }
+
+        callback.onResultCallback(needSetPermissions);
     }
 }
