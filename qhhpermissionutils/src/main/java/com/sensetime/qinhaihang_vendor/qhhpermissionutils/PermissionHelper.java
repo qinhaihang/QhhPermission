@@ -125,4 +125,35 @@ public class PermissionHelper {
         }, permissions);
     }
 
+    /**
+     * 请求权限
+     * @param permissions
+     */
+    public void requestPermissions(String...permissions){
+        getFragment().requestPermissions(permissions, new ICallbackManager.IPermissionListCallback() {
+            @Override
+            public void onResultCallback(List<Permission> permissions) {
+                boolean granted = true;
+                if(null != permissions){
+                    for (Permission permission : permissions) {
+                        if (!permission.granted) {
+                            granted = permission.granted;
+                            break;
+                        }
+                    }
+                }
+                if (null != mRequestCallback) {
+                    mRequestCallback.onAllPermissonGranted(granted);
+                }
+            }
+
+            @Override
+            public void onCheckResultCallback(List<String> permissions) {
+                if (null != mDenyPermissionCallback) {
+                    mDenyPermissionCallback.onDenyPermissions(permissions);
+                }
+            }
+        });
+    }
+
 }
