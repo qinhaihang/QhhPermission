@@ -119,6 +119,8 @@ public class PermissionHelper {
 
                 if (null != mDenyPermissionCallback) {
                     mDenyPermissionCallback.onDenyPermissions(permissions);
+                }else{
+                    requestPermissions(permissions.toArray(new String[permissions.size()]));
                 }
 
             }
