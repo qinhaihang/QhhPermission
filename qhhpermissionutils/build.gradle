@@ -32,3 +32,33 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
+
+static def releaseTime() {
+    return new Date().format("yyyyMMddHHmm", TimeZone.getDefault())
+}
+
+//删除isshowtoast.jar包任务
+task clearJar(type: Delete) {
+    FileTree tree = fileTree("build/libs/")
+    tree.visit {
+        element ->
+            if (element.getName().endsWith(".jar")) {
+                println "$element.file.name" + " " + element.getName()
+                delete element.file
+            }
+    }
+//    delete 'libs/face_body_sdk.jar'
+}
+task makeJar(type: Jar) {
+    //指定生成的jar名
+    baseName 'permission_' + android.defaultConfig.versionName + "_" + releaseTime()
+    //从哪里打包class文件
+    from('build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/sensetime/qinhaihang_vendor/qhhpermissionutils/')
+    //打包到jar后的目录结构
+    into('com/sensetime/qinhaihang_vendor/qhhpermissionutils/')
+    //去掉不需要打包的目录和文件
+    exclude('BuildConfig.class', 'R.class')
+    //去掉R$开头的文件
+    exclude { it.name.startsWith('R$') }
+}
+makeJar.dependsOn(clearJar, build)
